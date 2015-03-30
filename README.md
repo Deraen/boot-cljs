@@ -8,14 +8,20 @@ how well minimal ClojureScript task would work.
 
 ## Differences to boot-cljs
 
+- Uses fewer tempdirs
+
 | Boot-cljs | *This*
 --- | --- | ---
-Lines of code | x | 45
+Lines of code | 396 | 45
 --- | --- | ---
-Cold build time | | 9.5s
-Watch build time | | 0.5s
+Cold build time | 9.5s | 9.5s
+Watch build time | 0.25s | 0.25s
 
 Tested with [saapas][saapas]
+
+## Results
+
+- No performance improvements despite using fewer tempdirs, at least on Linux
 
 ## Missing features
 

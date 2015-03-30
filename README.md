@@ -10,12 +10,14 @@ how well minimal ClojureScript task would work.
 
 - Uses fewer tempdirs
 
-| Boot-cljs | *This*
+
+--- | Boot-cljs | *This*
 --- | --- | ---
 Lines of code | 396 | 45
 --- | --- | ---
 Cold build time | 9.5s | 9.5s
 Watch build time | 0.25s | 0.25s
+
 
 Tested with [saapas][saapas]
 
@@ -27,11 +29,11 @@ Tested with [saapas][saapas]
 
 - [ ] Setting `:main` and `:output-to` from `.cljs.edn`
 - [ ] Error reporting
-- [ ] [boot-reload][boot-reload] support.
+- [ ] Support for [boot-reload][boot-reload]
 
 ## License
 
-Copyright © 2014 Adzerk
+Copyright © 2014 Adzerk<br>
 Copyright © 2015 Juho Teperi
 
 Distributed under the Eclipse Public License either version 1.0 or (at

@@ -9,6 +9,4 @@
 
 (defn compile-cljs
   [src-paths opts]
-  (println src-paths opts)
-  (io/make-parents (io/file (:output-to opts)))
-  (time (cljs/build (CljsSourcePaths. (filter #(.exists (io/file %)) src-paths)) opts)))
+  (cljs/build (CljsSourcePaths. (filter #(.exists (io/file %)) src-paths)) opts))

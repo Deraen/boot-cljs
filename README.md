@@ -17,13 +17,14 @@ Lines of code |   | 396 | 45
 Cold build time | 15s | 9.5s | 9.5s
 Watch build time | 0.25s | 0.25s | 0.25s
 
-
 Windows
 
 --- | Boot-cljs 0.0-2814 | Boot-cljs 0.0-3126 | *This*
 --- | --- | --- | ---
 Cold build time | 32s | 22s | 19s
 Watch build time | 1.2s | 1.4s | 0.85s
+
+* Windows and Linux results are not comparable, tests have been run on different computers
 
 
 Tested with [saapas][saapas]

@@ -30,13 +30,13 @@
 
 ;; middleware ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn main
+(defn entry-point
   "Middleware to create the CLJS namespace for the build's .cljs.edn file and
   set the compiler :output-to option accordingly. The :output-to will be derived
   from the path of the .cljs.edn file (e.g. foo/bar.cljs.edn will produce the
   foo.bar CLJS namespace with output to foo/bar.js)."
-  [{:keys [docroot tmp-src tmp-out main] :as ctx}]
-  (let [[path file] ((juxt core/tmppath core/tmpfile) main)
+  [{:keys [docroot tmp-src tmp-out entry-point] :as ctx}]
+  (let [[path file] ((juxt core/tmppath core/tmpfile) entry-point)
         base-name   (-> file .getName deps/strip-extension)
         js-path     (.getPath (io/file tmp-out (str base-name ".js")))
         cljs-path   (.getPath (io/file "boot" "cljs" (str base-name ".cljs")))
@@ -46,16 +46,18 @@
         asset-path  (.getPath (io/file docroot output-dir))
         cljs-file   (doto (io/file tmp-src cljs-path) io/make-parents)
         cljs-ns     (symbol (util/path->ns cljs-path))
-        main-edn    (read-string (slurp file))
-        init-fns    (:init-fns main-edn)
-        requires    (into (sorted-set) (:require main-edn))
+        entry-point-edn (read-string (slurp file))
+        init-fns    (:init-fns entry-point-edn)
+        requires    (into (sorted-set) (:require entry-point-edn))
         init-nss    (into requires (map (comp symbol namespace) init-fns))]
     (->> (main-ns-forms cljs-ns init-nss init-fns) format-ns-forms (spit cljs-file))
     (-> ctx
         (assoc-in [:opts :output-to] js-path)
         (assoc-in [:opts :main] cljs-ns)
         (assoc-in [:opts :asset-path] asset-path)
-        (update-in [:opts] (partial merge-with util/into-or-latest) (:compiler-options main-edn)))))
+        (update-in [:opts]
+                   (partial merge-with util/into-or-latest)
+                   (:compiler-options entry-point-edn)))))
 
 (defn shim
   [{:keys [files opts] :as ctx}]

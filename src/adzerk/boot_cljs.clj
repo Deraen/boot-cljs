@@ -46,8 +46,8 @@
   {:tmp-out    tmp-out
    :tmp-src    tmp-src
    :tmp-result tmp-result
-   :main       nil
-   :files      nil
+   :entry-point   nil
+   :files         nil
    :opts       (-> {:libs          []
                     :externs       []
                     :preamble      []
@@ -59,13 +59,13 @@
 
 (defn- prep-context
   "Add per-compile fields to the base context object."
-  [main files docroot ctx]
-  (assoc ctx :main main :files files :docroot docroot))
+  [entry-point files docroot ctx]
+  (assoc ctx :entry-point entry-point :files files :docroot docroot))
 
 (defn- prep-compile
   "Given a per-compile base context, applies middleware to obtain the final,
   compiler-ready context for this build."
-  [{:keys [tmp-src tmp-out main files opts] :as ctx}]
+  [{:keys [tmp-src tmp-out entry-point files opts] :as ctx}]
   (when (not= (:optimizations opts) :none)
     (info "Emptying compiler cache...\n")
     (doseq [dir   [tmp-src tmp-out]
@@ -75,13 +75,13 @@
       ;; Selective deletion prevents independent builds from
       ;; interfering with eachother while also preserving source maps.
       (file/delete-all f)))
-  (->> ctx wrap/main wrap/shim wrap/externs wrap/source-map))
+  (->> ctx wrap/entry-point wrap/shim wrap/externs wrap/source-map))
 
 (defn- compile
   "Given a compiler context and a pod, compiles CLJS accordingly. Returns a
   seq of all compiled JS files known to the CLJS compiler in dependency order,
   as paths relative to the :output-to compiled JS file."
-  [{:keys [tmp-src tmp-out main files opts] :as ctx} pod]
+  [{:keys [tmp-src tmp-out files opts] :as ctx} pod]
   (info "Compiling %s...\n" (-> opts :output-to util/get-name))
   (dbug "CLJS options:\n%s\n" (with-out-str (pp/pprint opts)))
   (let [sources [(.getPath tmp-src)]
@@ -98,26 +98,26 @@
   (doseq [[p f] (map (juxt core/tmppath core/tmpfile) incs)]
     (file/copy-with-lastmod f (io/file tmp-result (util/rooted-file docroot p)))))
 
-(core/deftask ^:private default-main
+(core/deftask ^:private default-entry-point
   "Private task---given a base compiler context creates a .cljs.edn file and
   adds it to the fileset if none already exist. This default .cljs.edn file
   will :require all CLJS namespaces found in the fileset."
   [c context CTX edn "The cljs compiler context."]
-  (let [tmp-main (core/temp-dir!)]
+  (let [tmp-entry-point (core/temp-dir!)]
     (core/with-pre-wrap fileset
-      (core/empty-dir! tmp-main)
-      (let [{:keys [cljs main]} (deps/scan-fileset fileset)]
-        (if (seq main)
+      (core/empty-dir! tmp-entry-point)
+      (let [{:keys [cljs entry-points]} (deps/scan-fileset fileset)]
+        (if (seq entry-points)
           fileset
           (let [output-to (or (get-in context [:opts :output-to]) "main.js")
-                out-main  (-> output-to (.replaceAll "\\.js$" "") deps/add-extension)
-                out-file  (doto (io/file tmp-main out-main) io/make-parents)]
+                out-entry-point  (-> output-to (.replaceAll "\\.js$" "") deps/add-extension)
+                out-file  (doto (io/file tmp-entry-point out-entry-point) io/make-parents)]
             (info "Writing %s...\n" (.getName out-file))
             (->> cljs
                  (mapv (comp symbol util/path->ns core/tmppath))
                  (assoc {} :require)
                  (spit out-file))
-            (-> fileset (core/add-source tmp-main) core/commit!)))))))
+            (-> fileset (core/add-source tmp-entry-point) core/commit!)))))))
 
 (core/deftask cljs
   "Compile ClojureScript applications.
@@ -150,11 +150,11 @@
 
     (warn-on-cljs-version-differences)
     (comp
-      (default-main :context ctx)
+      (default-entry-point :context ctx)
       (core/with-pre-wrap fileset
         (core/empty-dir! tmp-result)
-        (let [{:keys [main incs cljs] :as fs} (deps/scan-fileset fileset)]
-          (loop [[m & more] main, dep-order nil]
+        (let [{:keys [entry-points incs cljs] :as fs} (deps/scan-fileset fileset)]
+          (loop [[m & more] entry-points, dep-order nil]
             (let [{{:keys [optimizations]} :opts :as ctx} ctx]
               (if m
                 (let [docroot   (.getParent (io/file (core/tmppath m)))

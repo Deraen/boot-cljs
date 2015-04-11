@@ -20,8 +20,8 @@
 
 (defn strip-extension
   "Strip the .cljs.edn extension from the given main-edn-path."
-  [main-edn-path]
-  (.replaceAll main-edn-path "\\.cljs\\.edn$" ""))
+  [entry-point-path]
+  (.replaceAll entry-point-path "\\.cljs\\.edn$" ""))
 
 (defn add-extension
   "Adds the .cljs.edn extension to the given path."
@@ -58,5 +58,5 @@
     {:cljs (->> srcs (core/by-ext     [".cljs"]) (sort-by :path))
      :exts (->> srcs (core/by-ext   [".ext.js"]) (sort-by :path))
      :libs (->> srcs (core/by-ext   [".lib.js"]) (sort-by :path))
-     :main (->> srcs (core/by-ext [".cljs.edn"]) (sort-by :path))
+     :entry-points (->> srcs (core/by-ext [".cljs.edn"]) (sort-by :path))
      :incs (->> srcs (core/by-ext   [".inc.js"]) (sort sort-inc-js))}))
